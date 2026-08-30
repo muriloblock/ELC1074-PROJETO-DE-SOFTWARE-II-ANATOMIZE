@@ -74,3 +74,35 @@ No PowerShell:
 python -m pip install -r requirements.txt
 python -m examples.gerar_perguntas
 ```
+
+## Avaliação de respostas (Murilo)
+
+O módulo em `src/avaliador_respostas.py` recebe uma pergunta gerada e a resposta
+do aluno já transcrita para texto. A avaliação considera o significado da resposta,
+atribui uma nota de 0 a 10 e considera correta uma resposta com nota mínima 7.
+
+```python
+from src import avaliar_resposta
+
+avaliacao = avaliar_resposta(pergunta, resposta_transcrita)
+```
+
+O retorno possui o seguinte formato:
+
+```json
+{
+  "correta": true,
+  "nota": 9,
+  "feedback": "A resposta apresentou os conceitos principais.",
+  "pontosAcertados": ["ventrículo direito", "pulmões"],
+  "pontosFaltantes": [],
+  "respostaIdeal": "Exemplo de resposta completa."
+}
+```
+
+Para testar a mesma pergunta com três respostas diferentes — completa, parcial e
+incorreta:
+
+```powershell
+python -m examples.avaliar_resposta
+```
