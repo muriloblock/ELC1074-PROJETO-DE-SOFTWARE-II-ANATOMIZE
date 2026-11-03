@@ -10,7 +10,7 @@ import { SessionSummaryCard } from './components/SessionSummaryCard';
 import { HelpModal } from './components/HelpModal';
 import { AuthScreen } from './components/AuthScreen';
 import { LanguageToggle } from './components/LanguageToggle';
-import { TRANSLATIONS, agruparPorPergunta } from './types';
+import { TRANSLATIONS, agruparPorPergunta, idDoBlocoPergunta } from './types';
 import type { StudySession, Language, Pergunta, SessionSummaryStats } from './types';
 import { apiService, traduzirErroApi } from './services/api';
 import { LOCALES, lerIdiomaInicial, salvarIdioma } from './services/idioma';
@@ -201,6 +201,17 @@ export function App() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const newQuestionRef = useRef<HTMLElement>(null);
   const [questionToScrollId, setQuestionToScrollId] = useState<string | null>(null);
+
+  const scrollToElementId = (elementId: string) => {
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const el = document.getElementById(elementId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 60);
+    });
+  };
 
   // Sempre que o usuário logado muda (login, logout ou troca de conta), zera
   // o estado local e recarrega as sessions do banco do usuário atual — evita
@@ -396,6 +407,7 @@ export function App() {
       setSessions((prev) =>
         prev.map((s) => (s.id === sessionId ? { ...s, messages: [...s.messages, userMessage] } : s)),
       );
+      scrollToElementId(`msg-${userMessage.id}`);
 
       const { evaluationId, ...evaluation } = await apiService.avaliarResposta(questionId, text, lang);
       const evaluationMessage = await apiService.inserirMensagemAvaliacao(
@@ -409,6 +421,7 @@ export function App() {
       setSessions((prev) =>
         prev.map((s) => (s.id === sessionId ? { ...s, messages: [...s.messages, evaluationMessage] } : s)),
       );
+      scrollToElementId(`msg-${evaluationMessage.id}`);
     } catch (err: unknown) {
       const msg = traduzirErroApi(err, lang);
       console.error('Erro na avaliação:', err);
@@ -425,6 +438,7 @@ export function App() {
     apiService
       .definirPerguntaAtual(activeSessionId, String(pergunta.id))
       .catch((err) => console.error('Falha ao salvar pergunta atual:', err));
+    scrollToElementId(idDoBlocoPergunta(pergunta.id));
   };
 
   const handleTranscribeAudio = async (audioBlob: Blob) => {
@@ -570,9 +584,19 @@ export function App() {
               ))}
 
               {/* respostas sem pergunta correspondente (ex.: avaliação que falhou) não somem */}
-              {orfas.map((msg) => (
-                <RespostaMensagem key={msg.id} msg={msg} lang={lang} />
-              ))}
+              {orfas.map((msg) => {
+                const matchingOrdem = activeSession?.messages.find(
+                  (m) => m.type === 'question' && String(m.pergunta?.id) === msg.questionId,
+                )?.pergunta?.ordem;
+                return (
+                  <RespostaMensagem
+                    key={msg.id}
+                    msg={msg}
+                    lang={lang}
+                    questionOrder={matchingOrdem}
+                  />
+                );
+              })}
 
               {isProcessing && (
                 <div className="flex items-center gap-3 text-zinc-600 text-sm italic pl-2 bg-emerald-50/60 border border-emerald-100/80 rounded-xl p-3 max-w-md">

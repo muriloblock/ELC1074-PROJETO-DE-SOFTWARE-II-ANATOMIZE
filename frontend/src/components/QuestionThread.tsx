@@ -1,13 +1,24 @@
 import type { FC, Ref } from 'react';
 import { QuestionCard } from './QuestionCard';
 import { EvaluationCard } from './EvaluationCard';
-import { idDoBlocoPergunta } from '../types';
+import { idDoBlocoPergunta, TRANSLATIONS } from '../types';
 import type { ChatMessage, GrupoPergunta, Language } from '../types';
 
-export const RespostaMensagem: FC<{ msg: ChatMessage; lang: Language }> = ({ msg, lang }) => {
+export const RespostaMensagem: FC<{
+  msg: ChatMessage;
+  lang: Language;
+  questionOrder?: number;
+}> = ({ msg, lang, questionOrder }) => {
+  const t = TRANSLATIONS[lang];
+
   if (msg.sender === 'user') {
     return (
-      <div className="flex justify-end">
+      <div id={`msg-${msg.id}`} className="flex flex-col items-end gap-1.5 scroll-mt-6">
+        {questionOrder != null && (
+          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 border border-emerald-300 px-2.5 py-0.5 rounded-full select-none uppercase tracking-wide">
+            {t.questionBadge} #{questionOrder}
+          </span>
+        )}
         <div className="max-w-xl bg-zinc-100/90 text-zinc-900 rounded-2xl rounded-tr-xs px-5 py-3 text-[15px] leading-relaxed shadow-2xs">
           {msg.content}
         </div>
@@ -17,8 +28,8 @@ export const RespostaMensagem: FC<{ msg: ChatMessage; lang: Language }> = ({ msg
 
   if (msg.type === 'evaluation' && msg.evaluation) {
     return (
-      <div className="flex justify-start pt-1">
-        <EvaluationCard evaluation={msg.evaluation} lang={lang} />
+      <div id={`msg-${msg.id}`} className="flex justify-start pt-1 scroll-mt-6">
+        <EvaluationCard evaluation={msg.evaluation} lang={lang} questionOrder={questionOrder} />
       </div>
     );
   }
@@ -46,7 +57,12 @@ export const QuestionThread: FC<QuestionThreadProps> = ({ grupo, lang, isActive,
     {grupo.respostas.length > 0 && (
       <div className="space-y-4 border-t border-dashed border-zinc-200 pt-4">
         {grupo.respostas.map((msg) => (
-          <RespostaMensagem key={msg.id} msg={msg} lang={lang} />
+          <RespostaMensagem
+            key={msg.id}
+            msg={msg}
+            lang={lang}
+            questionOrder={grupo.pergunta.ordem}
+          />
         ))}
       </div>
     )}
