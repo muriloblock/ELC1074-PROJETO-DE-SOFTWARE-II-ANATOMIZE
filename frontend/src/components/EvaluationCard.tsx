@@ -8,9 +8,10 @@ import { formatarNota } from '../services/idioma';
 interface EvaluationCardProps {
   evaluation: EvaluationData;
   lang: Language;
+  questionOrder?: number;
 }
 
-export const EvaluationCard: FC<EvaluationCardProps> = ({ evaluation, lang }) => {
+export const EvaluationCard: FC<EvaluationCardProps> = ({ evaluation, lang, questionOrder }) => {
   const t = TRANSLATIONS[lang];
   const isAprovado = evaluation.nota >= 7.0;
   // entregar a resposta pronta junto com a nota tira o valor de tentar de novo
@@ -29,7 +30,12 @@ export const EvaluationCard: FC<EvaluationCardProps> = ({ evaluation, lang }) =>
       </div>
 
       <div className="flex-1 space-y-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {questionOrder != null && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-300 uppercase tracking-wide">
+              <span>{t.questionBadge} #{questionOrder}</span>
+            </div>
+          )}
           <div
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${isAprovado
                 ? 'bg-emerald-50 border-emerald-200 text-emerald-800'

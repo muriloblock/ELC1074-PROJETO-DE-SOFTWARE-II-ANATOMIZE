@@ -28,6 +28,19 @@ export function detectarIdiomaDoNavegador(): Language {
 // feedback, então a escolha manual é lembrada. Sem escolha, vale o do navegador:
 // um celular novo não deveria abrir em português só porque nunca apertou o botão.
 export function lerIdiomaInicial(): Language {
+  if (typeof window !== 'undefined' && window.location?.search) {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const queryLang = params.get('lang')?.toUpperCase();
+      if (queryLang === 'PT' || queryLang === 'ES') {
+        salvarIdioma(queryLang);
+        return queryLang;
+      }
+    } catch {
+      // url inválida ou ambiente sem window
+    }
+  }
+
   try {
     const salvo = localStorage.getItem(LANG_STORAGE_KEY);
     if (salvo === 'PT' || salvo === 'ES') return salvo;
@@ -47,5 +60,6 @@ export function salvarIdioma(lang: Language): void {
 
 /** nota de 0 a 10 com o separador decimal do idioma (7,5 em PT/ES, não 7.5) */
 export function formatarNota(nota: number, lang: Language): string {
-  return nota.toLocaleString(LOCALES[lang], { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const locale = LOCALES[lang] || 'pt-BR';
+  return Number(nota).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 }
