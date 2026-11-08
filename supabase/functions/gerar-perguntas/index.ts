@@ -81,7 +81,13 @@ Deno.serve(async (req) => {
       blocos.push(textoExtraido.slice(i, i + limite));
     }
 
-    const perguntasPorBloco = Math.max(2, Math.ceil(quantidade / blocos.length));
+    // começa em um bloco diferente a cada "gerar mais", para não repetir os mesmos trechos
+    const inicioBloco = blocos.length > 0 ? existentes.length % blocos.length : 0;
+    const blocosOrdenados = blocos.length > 0
+      ? [...blocos.slice(inicioBloco), ...blocos.slice(0, inicioBloco)]
+      : blocos;
+
+    const perguntasPorBloco = Math.max(2, Math.ceil(quantidade / blocosOrdenados.length));
     const perguntas: (Awaited<ReturnType<typeof gerarPerguntas>>[number])[] = [];
     let ordemAtual = ordemInicialBase;
     const dificuldadesTotais = Array.from({ length: quantidade }, (_, i) =>
@@ -89,7 +95,7 @@ Deno.serve(async (req) => {
     );
     let offsetDificuldade = 0;
 
-    for (const bloco of blocos) {
+    for (const bloco of blocosOrdenados) {
       if (perguntas.length >= quantidade) break;
       const restantes = quantidade - perguntas.length;
       const pedir = Math.min(perguntasPorBloco, restantes);
