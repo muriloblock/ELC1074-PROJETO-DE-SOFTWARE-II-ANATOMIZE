@@ -114,18 +114,20 @@ export interface OpcoesGeracao {
   perguntasExistentes?: string[];
   /** ordem da primeira pergunta gerada; continua a numeração da sessão */
   ordemInicial?: number;
+  /** dificuldades desejadas para cada pergunta, na ordem */
+  dificuldadesAlvo?: string[];
 }
 
 export async function gerarPerguntas(
   contexto: string,
   quantidade: number,
-  { idioma, perguntasExistentes = [], ordemInicial = 1 }: OpcoesGeracao,
+  { idioma, perguntasExistentes = [], ordemInicial = 1, dificuldadesAlvo = [] }: OpcoesGeracao,
 ): Promise<Pergunta[]> {
   const usarGemini = provider() === 'gemini';
   let ultimaQuantidade = 0;
 
   for (let tentativa = 1; tentativa <= MAXIMO_TENTATIVAS; tentativa++) {
-    let prompt = montarPrompt(contexto, quantidade, idioma, perguntasExistentes);
+    let prompt = montarPrompt(contexto, quantidade, idioma, perguntasExistentes, dificuldadesAlvo);
     if (tentativa > 1) {
       prompt += sufixoTentativaGeracao(tentativa, quantidade, idioma);
     }

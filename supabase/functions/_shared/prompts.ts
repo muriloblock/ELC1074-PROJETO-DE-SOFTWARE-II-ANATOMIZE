@@ -92,6 +92,7 @@ export function montarPrompt(
   quantidade: number,
   idioma: Idioma,
   perguntasExistentes: string[] = [],
+  dificuldadesAlvo: string[] = [],
 ): string {
   // as perguntas já existentes nasceram do PDF do próprio aluno; entram entre tags
   // e marcadas como dado, igual ao contexto, para não virarem instrução
@@ -111,7 +112,9 @@ Você é um professor de Anatomia Sistêmica criando uma atividade de estudo ora
 
 Crie exatamente ${quantidade} perguntas discursivas usando SOMENTE as informações do
 contexto fornecido. As perguntas devem avaliar compreensão, não apenas memorização.
-Distribua as dificuldades quando o conteúdo permitir e evite perguntas repetidas.
+${dificuldadesAlvo.length
+  ? `As dificuldades das perguntas, nesta ordem, devem ser: ${dificuldadesAlvo.join(', ')}.`
+  : 'Distribua as dificuldades quando o conteúdo permitir'} e evite perguntas repetidas.
 A dificuldade de cada pergunta deve ser uma destas: ${DIFICULDADES.join(', ')}.
 
 ${INSTRUCAO_IDIOMA[idioma]}

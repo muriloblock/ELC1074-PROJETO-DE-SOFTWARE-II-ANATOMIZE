@@ -1,7 +1,7 @@
 import { corsHeaders, handlePreflight } from '../_shared/cors.ts';
 import { createUserClient } from '../_shared/supabaseClient.ts';
 import { gerarPerguntas } from '../_shared/ai-provider.ts';
-import { idiomaDaRequisicao } from '../_shared/prompts.ts';
+import { idiomaDaRequisicao, DIFICULDADES } from '../_shared/prompts.ts';
 import { consumirCotaIA } from '../_shared/rate-limit.ts';
 import { ErroIA, traduzirErroIA, jsonError } from '../_shared/errors.ts';
 
@@ -81,18 +81,25 @@ Deno.serve(async (req) => {
       blocos.push(textoExtraido.slice(i, i + limite));
     }
 
-    const perguntasPorBloco = Math.max(1, Math.ceil(quantidade / blocos.length));
+    const perguntasPorBloco = Math.max(2, Math.ceil(quantidade / blocos.length));
     const perguntas: (Awaited<ReturnType<typeof gerarPerguntas>>[number])[] = [];
     let ordemAtual = ordemInicialBase;
+    const dificuldadesTotais = Array.from({ length: quantidade }, (_, i) =>
+      DIFICULDADES[(existentes.length + i) % DIFICULDADES.length],
+    );
+    let offsetDificuldade = 0;
 
     for (const bloco of blocos) {
       if (perguntas.length >= quantidade) break;
       const restantes = quantidade - perguntas.length;
       const pedir = Math.min(perguntasPorBloco, restantes);
+      const dificuldadesBloco = dificuldadesTotais.slice(offsetDificuldade, offsetDificuldade + pedir);
+      offsetDificuldade += pedir;
       const novas = await gerarPerguntas(bloco, pedir, {
         idioma,
         perguntasExistentes: [...enunciadosExistentes, ...perguntas.map((p) => p.enunciado)],
         ordemInicial: ordemAtual,
+        dificuldadesAlvo: dificuldadesBloco,
       });
       perguntas.push(...novas);
       ordemAtual += novas.length;
