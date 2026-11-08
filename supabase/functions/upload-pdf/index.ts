@@ -86,9 +86,33 @@ Deno.serve(async (req) => {
 
     const provider = (Deno.env.get('AI_PROVIDER') || 'groq').toLowerCase();
     const limite = MAX_CONTEXT_CHARS_BY_PROVIDER[provider] ?? MAX_CONTEXT_CHARS_BY_PROVIDER.groq;
-    const contexto = textoExtraido.slice(0, limite);
 
-    const perguntas = await gerarPerguntas(contexto, quantidade, { idioma });
+    // cobre o documento inteiro: divide o texto em blocos do tamanho suportado
+    // pelo provedor e gera perguntas em cada bloco, evitando repetição entre eles
+    const tamanhoBloco = limite;
+    const blocos: string[] = [];
+    for (let i = 0; i < textoExtraido.length; i += tamanhoBloco) {
+      blocos.push(textoExtraido.slice(i, i + tamanhoBloco));
+    }
+
+    const perguntasPorBloco = Math.max(1, Math.ceil(quantidade / blocos.length));
+    const perguntas: (Awaited<ReturnType<typeof gerarPerguntas>>[number])[] = [];
+    const enunciadosExistentes: string[] = [];
+    let ordemAtual = 1;
+
+    for (const bloco of blocos) {
+      if (perguntas.length >= quantidade) break;
+      const restantes = quantidade - perguntas.length;
+      const pedir = Math.min(perguntasPorBloco, restantes);
+      const novas = await gerarPerguntas(bloco, pedir, {
+        idioma,
+        perguntasExistentes: enunciadosExistentes,
+        ordemInicial: ordemAtual,
+      });
+      perguntas.push(...novas);
+      enunciadosExistentes.push(...novas.map((p) => p.enunciado));
+      ordemAtual += novas.length;
+    }
 
     // uma sessão sempre nasce de um upload, e o PDF dela é imutável depois disso
     const pdfName = sanitizarNomeArquivo(file.name);

@@ -69,17 +69,34 @@ Deno.serve(async (req) => {
       .order('ordem', { ascending: true });
     if (existentesError) throw existentesError;
 
-    const ordemInicial = existentes.reduce((maior, q) => Math.max(maior, q.ordem), 0) + 1;
+    const ordemInicialBase = existentes.reduce((maior, q) => Math.max(maior, q.ordem), 0) + 1;
+    const enunciadosExistentes = existentes.map((q) => q.enunciado);
 
     const provider = (Deno.env.get('AI_PROVIDER') || 'groq').toLowerCase();
     const limite = MAX_CONTEXT_CHARS_BY_PROVIDER[provider] ?? MAX_CONTEXT_CHARS_BY_PROVIDER.groq;
-    const contexto = textoExtraido.slice(0, limite);
 
-    const perguntas = await gerarPerguntas(contexto, quantidade, {
-      idioma,
-      perguntasExistentes: existentes.map((q) => q.enunciado),
-      ordemInicial,
-    });
+    // cobre o documento inteiro em blocos, evitando repetição com as perguntas já feitas
+    const blocos: string[] = [];
+    for (let i = 0; i < textoExtraido.length; i += limite) {
+      blocos.push(textoExtraido.slice(i, i + limite));
+    }
+
+    const perguntasPorBloco = Math.max(1, Math.ceil(quantidade / blocos.length));
+    const perguntas: (Awaited<ReturnType<typeof gerarPerguntas>>[number])[] = [];
+    let ordemAtual = ordemInicialBase;
+
+    for (const bloco of blocos) {
+      if (perguntas.length >= quantidade) break;
+      const restantes = quantidade - perguntas.length;
+      const pedir = Math.min(perguntasPorBloco, restantes);
+      const novas = await gerarPerguntas(bloco, pedir, {
+        idioma,
+        perguntasExistentes: [...enunciadosExistentes, ...perguntas.map((p) => p.enunciado)],
+        ordemInicial: ordemAtual,
+      });
+      perguntas.push(...novas);
+      ordemAtual += novas.length;
+    }
 
     const { data: questionRows, error: insertError } = await supabase
       .from('questions')
