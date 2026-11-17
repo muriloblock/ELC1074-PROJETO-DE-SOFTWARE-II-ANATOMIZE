@@ -1,182 +1,181 @@
-# ELC1074-PROJETO-DE-SOFTWARE-II
+# Anatomize
 
-## Definição do tema
+AI-powered oral examination and assessment platform designed to help medical and health science students prepare for theoretical and practical anatomy evaluations through dynamic speech-to-text workflows, intelligent document chunking, and automated LLM feedback.
 
-Jogo a modo de ¨Trivia¨que use Inteligência artificial, onde os estudantes carreguem uma unidade em formato pdf, e o software elabore perguntas de Anatomia sistémica para o aluno carregar um áudio com a resposta, o software avalia a resposta e pontua com uma qualificação, oferecendo ao mesmo tempo uma retroalimentação de uma resposta 10 de 10. Serve para preparação das provas semestrais teóricas e desenvolver expressão oral sem a pressão de uma prova presencial.  
+---
 
-## Divisão de tarefas
+## Overview
 
-1 - Frontend:
+Oral examinations in anatomy and healthcare disciplines demand precise anatomical terminology, spatial reasoning, and clear verbal communication under pressure. Traditional preparation methods rely on static flashcards or mock peer reviews, which rarely provide consistent, objective evaluation or realistic examination conditions.
 
-- Tecnologia: HTML, CSS, JavaScript, React
+**Anatomize** bridges this gap by transforming course material (PDFs) into interactive, oral exam simulations. Students upload lecture notes or textbook chapters, select their desired difficulty and question count, and answer questions verbally or via text. An automated AI evaluation pipeline assesses anatomical accuracy, completeness, and clinical terminology, providing immediate qualitative feedback and benchmark model answers.
 
-2 - Banco de dados, autenticação e salvamento de PDF:
+---
 
-- Tecnologia:
-- Sugestão de tecnologia: Supabase ou firebase, tem serviços gratuitos que poupam esse desenvolvimento de autenticação e banco de dados
+## Key Features
 
-3 - IA para geração de perguntas e avaliação (Murilo):
+* **Document Ingestion & Semantic Chunking:** Ingests academic PDFs and applies content chunking algorithms to sample sections uniformly, preventing repetitive questions and guaranteeing comprehensive topic coverage.
+* **Pluggable LLM Architecture:** Modular backend architecture supporting multiple LLM backends (Groq LLaMA models for low-latency inference or Google Gemini) switchable via environment variables.
+* **Oral Assessment & Audio Transcription:** Supports speech-to-text capture so students can verbalize responses, replicating the real-world pressure of oral exam boards.
+* **Objective Multi-Criteria Grading:** Evaluates student submissions against verified anatomical criteria, flagging omissions, inaccurate terminology, and partial misconceptions.
+* **Model Answer Generation:** Supplies an exemplary benchmark response for each question, reinforcing structured argumentation and precise anatomical references.
+* **Interactive Examination Workspace:** Responsive desktop interface featuring a Question Navigation Rail, threaded answer-to-evaluation mappings, and session summary metrics.
+* **Authentication & Persistence:** Secure user sessions and assessment histories managed through Supabase.
 
-- Tecnologia: 
-- Tecnologia: Python e API do Groq
+---
 
-4 - Transcrição de áudio:
-
-- Tecnologia:
-- Sugestão de tecnologia: grog cloud ou gemini
-
-5 - Hospedagem e deploy
-
-- Tecnologia:
-- Sugestão: vercel, render, netlify
-
-## Geração de perguntas (Murilo)
-
-O módulo em `src/gerador_perguntas.py` recebe o texto já extraído de um PDF e
-gera perguntas discursivas estruturadas. A leitura do arquivo PDF ficará a cargo
-de outro componente do sistema.
-
-### Contrato do módulo
-
-```python
-from src import gerar_perguntas
-
-perguntas = gerar_perguntas(contexto, quantidade=3)
-```
-
-Cada pergunta possui o seguinte formato:
-
-```json
-{
-  "id": 1,
-  "enunciado": "Texto da pergunta",
-  "respostaEsperada": "Resposta completa baseada no contexto",
-  "topicosChave": ["conceito 1", "conceito 2"],
-  "dificuldade": "básica"
-}
-```
-
-### Como executar
-
-É necessário ter o Python 3.10 ou superior e uma chave da API do Groq. A chave
-deve existir apenas no backend; ela não pode ser incluída no código do frontend.
-
-Crie um arquivo `.env` com:
-
-```env
-GROQ_API_KEY=sua_chave
-```
-
-No PowerShell:
-
-```powershell
-python -m pip install -r requirements.txt
-python -m examples.gerar_perguntas
-```
-
-## Avaliação de respostas (Murilo)
-
-O módulo em `src/avaliador_respostas.py` recebe uma pergunta gerada e a resposta
-do aluno já transcrita para texto. A avaliação considera o significado da resposta,
-atribui uma nota de 0 a 10 e considera correta uma resposta com nota mínima 7.
-
-```python
-from src import avaliar_resposta
-
-avaliacao = avaliar_resposta(pergunta, resposta_transcrita)
-```
-
-O retorno possui o seguinte formato:
-
-```json
-{
-  "correta": true,
-  "nota": 9,
-  "feedback": "A resposta apresentou os conceitos principais.",
-  "pontosAcertados": ["ventrículo direito", "pulmões"],
-  "pontosFaltantes": [],
-  "respostaIdeal": "Exemplo de resposta completa."
-}
-```
-
-Para testar a mesma pergunta com três respostas diferentes — completa, parcial e
-incorreta:
-
-```powershell
-python -m examples.avaliar_resposta
-```
-
-## Frontend (Lucas)
-
-O módulo em `frontend/`, contém as funcionalidades: tradução (PT/ES) da interface, painel lateral com histórico de conversas, seção de ajdua com tutorial de como usar o app, upload de PDF e gravação de áudio pelo microfone.
-
-### Como integrar no backend
-
-O frontend possui duas rotas de API
-
-#### 1. Upload de Arquivo
-- POST `/upload-pdf`
-- Corpo : `file` (o arquivo PDF) e `quantidade` (3).
-- O que espera receber:
-```json
-{
-  "pdfName": "nome_do_arquivo.pdf",
-  "perguntas": [ /* Array seguindo o formato de perguntas do Murilo */ ]
-}
-```
-
-#### 2. Avaliação de Resposta (Texto ou Áudio)
-- POST `/avaliar`
-- O que espera receber: Um objeto JSON seguindo o formato de avaliação do Murilo (`correta`, `nota`, `feedback`, `pontosAcertados`, `pontosFaltantes`, `respostaIdeal`).
-
-### Como executar o frontend
-
-Acesse a pasta `frontend` pelo terminal:
-
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-## Backend API (FastAPI)
-
-The `backend/` folder wires the existing `src/gerador_perguntas.py` and
-`src/avaliador_respostas.py` modules to the HTTP routes the frontend already
-calls (`/api/upload-pdf` and `/api/avaliar`).
+## System Architecture
 
 ```
-backend/
-  main.py            # FastAPI app, CORS, router registration
-  routers/
-    questions.py      # POST /api/upload-pdf
-    evaluation.py      # POST /api/avaliar
-  services/
-    pdf_reader.py       # extracts text from the uploaded PDF
++-------------------------------------------------------------------------+
+|                              Frontend Client                            |
+|        (React 19, TypeScript, Vite, Tailwind CSS v4, Lucide Icons)      |
++-------------------------------------------------------------------------+
+       |                                                 ^
+       | HTTP / REST                                     | State & UI Sync
+       v                                                 |
++-------------------------------------------------------------------------+
+|                           FastAPI Backend                               |
+|        (Python 3.12, Uvicorn, PyPDF Document Processor, Pydantic)       |
++-------------------------------------------------------------------------+
+       |                                                 |
+       | Semantic Chunks                                 | Transcribed Input
+       v                                                 v
++-----------------------------+               +---------------------------+
+|      Question Engine        |               |    Evaluation Engine      |
+| (Prompt Pipeline & Chunking)|               | (Scoring & Feedback Gen)  |
++-----------------------------+               +---------------------------+
+               \                                     /
+                v                                   v
++-------------------------------------------------------------------------+
+|                         AI Provider Abstraction                         |
+|            +-----------------------+   +------------------------+       |
+|            |      Groq Cloud       |   |      Google Gemini     |       |
+|            |    (LLaMA Models)     |   |       (GenAI SDK)      |       |
+|            +-----------------------+   +------------------------+       |
++-------------------------------------------------------------------------+
+                                     |
+                                     v
++-------------------------------------------------------------------------+
+|                         Persistence & Auth                              |
+|                   (Supabase PostgreSQL & Storage)                       |
++-------------------------------------------------------------------------+
 ```
 
-### Requirements
+---
 
-Same as the question/evaluation modules, plus `GROQ_API_KEY` set in a `.env`
-file at the project root (see `.env.example`).
+## Tech Stack
 
-### Running locally
+* **Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, Lucide React, Supabase Client, Oxlint
+* **Backend:** Python 3.12, FastAPI, Uvicorn, PyPDF, python-multipart, Pydantic
+* **AI & NLP:** Groq API, Google GenAI SDK, Prompt Engineering, Semantic Chunking
+* **Database & Auth:** Supabase (PostgreSQL, Auth, Object Storage)
 
-From the project root, in PowerShell:
+---
 
-```powershell
-python -m pip install -r requirements.txt
-python -m uvicorn backend.main:app --reload --port 8000
+## Getting Started
+
+### Prerequisites
+
+* Node.js >= 20 and npm >= 10
+* Python >= 3.11
+* A Supabase project instance
+* API Key for Groq or Google Gemini
+
+---
+
+### Backend Setup
+
+1. Navigate to the project root and create a Python virtual environment:
+   ```bash
+   python -m venv venv
+   # On Windows:
+   .\venv\Scripts\activate
+   # On Linux/macOS:
+   source venv/bin/activate
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Configure environment variables:
+   Copy `.env.example` to `.env` in the project root:
+   ```bash
+   cp .env.example .env
+   ```
+   Populate the following variables:
+   ```env
+   GROQ_API_KEY=your_groq_api_key_here
+   # Optional alternative provider:
+   # AI_PROVIDER=gemini
+   # GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+4. Start the FastAPI development server:
+   ```bash
+   uvicorn backend.main:app --reload --port 8000
+   ```
+   The API will be accessible at `http://localhost:8000` with Swagger documentation available at `http://localhost:8000/docs`.
+
+---
+
+### Frontend Setup
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. Configure frontend environment variables:
+   Copy `frontend/.env.example` to `frontend/.env`:
+   ```bash
+   cp .env.example .env
+   ```
+   Configure your Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+3. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+   The application will be running at `http://localhost:5173`.
+
+---
+
+## Project Structure
+
+```
+├── backend/
+│   ├── routers/          # FastAPI route controllers (questions, evaluation)
+│   ├── services/         # Business logic (AI provider abstraction, PDF processing)
+│   └── main.py           # FastAPI application entry point and CORS configuration
+├── frontend/
+│   ├── src/
+│   │   ├── components/   # UI components (QuestionRail, Dropzone, EvaluationCard, etc.)
+│   │   ├── hooks/        # React custom hooks
+│   │   ├── services/     # API integration and Supabase client
+│   │   └── App.tsx       # Root layout and exam session workflow
+│   └── package.json      # Frontend dependencies and build scripts
+├── src/                  # Core AI evaluation and question generation implementations
+├── supabase/             # Database migrations and configurations
+└── requirements.txt      # Python dependencies
 ```
 
-The API will be available at `http://localhost:8000/api`, which matches the
-default `VITE_API_URL` used by `frontend/src/services/api.ts`. Run the
-frontend (`npm run dev` inside `frontend/`) at the same time to use the app
-end to end.
+---
 
-This is a development setup only — no deployment (Railway, Render, etc.) is
-configured yet.
+## Authors & Contributions
 
-# Avisos para o backend e banco de ados
-- Restrição: quando o usuário manda áudio, o frontend envia via `FormData` contendo a chave `audio` no formato `.webm`. O serviço de transcrição no backend deve interpretar e transcrever arquivos `.webm`.
-- o histórico de chats atual funciona na memória, quando fizerem o backend e o banco de dados, deve substituir o estado local `sessions` para uma requição GET na inicialização para buscar os chats persistidos no banco de dados
+Developed as a collaborative software engineering project at the **Universidade Federal de Santa Maria (UFSM)**.
+
+* **Lucas Pairé** — [GitHub](https://github.com/lucasxpaire) • [LinkedIn](https://www.linkedin.com/in/lucaspaire/)
+  * Implemented semantic PDF chunking and non-repetitive distribution logic for question generation.
+  * Designed and built frontend UX components including the interactive Question Navigation Rail, dynamic answer-to-evaluation grouping, and session synchronization.
+  * Backend API integration and state persistence.
+* **Murilo Block** — [GitHub](https://github.com/muriloblock)
+  * AI engine module implementation, Groq prompt pipelines, and initial project scaffolding.

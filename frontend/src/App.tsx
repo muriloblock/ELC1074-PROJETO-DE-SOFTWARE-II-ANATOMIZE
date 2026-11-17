@@ -10,6 +10,7 @@ import { SessionSummaryCard } from './components/SessionSummaryCard';
 import { HelpModal } from './components/HelpModal';
 import { AuthScreen } from './components/AuthScreen';
 import { LanguageToggle } from './components/LanguageToggle';
+import { LandingPage } from './components/LandingPage';
 import { TRANSLATIONS, agruparPorPergunta, idDoBlocoPergunta } from './types';
 import type { StudySession, Language, Pergunta, SessionSummaryStats } from './types';
 import { apiService, traduzirErroApi } from './services/api';
@@ -185,8 +186,36 @@ const MOCK_PREVIEW_SESSION: StudySession = {
 
 const isPreviewMode = typeof window !== 'undefined' && window.location.search.includes('preview=summary');
 
+const isLandingPath = () => {
+  if (typeof window === 'undefined') return false;
+  return window.location.pathname.startsWith('/landing') || window.location.hash.includes('landing');
+};
+
 export function App() {
   const [lang, setLang] = useState<Language>(lerIdiomaInicial);
+  const [currentView, setCurrentView] = useState<'app' | 'landing'>(() => (isLandingPath() ? 'landing' : 'app'));
+
+  useEffect(() => {
+    const handleUrlChange = () => {
+      setCurrentView(isLandingPath() ? 'landing' : 'app');
+    };
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
+  }, []);
+
+  const navigateTo = (view: 'app' | 'landing') => {
+    setCurrentView(view);
+    if (view === 'landing') {
+      window.history.pushState({}, '', '/landing');
+    } else {
+      window.history.pushState({}, '', '/');
+    }
+  };
+
   const { user, isLoading: isAuthLoading, signOut } = useAuth();
   const [sessions, setSessions] = useState<StudySession[]>(isPreviewMode ? [MOCK_PREVIEW_SESSION] : []);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(isPreviewMode ? MOCK_PREVIEW_SESSION.id : null);
@@ -519,6 +548,16 @@ export function App() {
       <div className="flex h-screen w-screen items-center justify-center bg-white">
         <Sparkles className="w-6 h-6 text-emerald-600 animate-spin" />
       </div>
+    );
+  }
+
+  if (currentView === 'landing') {
+    return (
+      <LandingPage
+        onOpenApp={() => navigateTo('app')}
+        lang={lang}
+        onToggleLanguage={toggleLanguage}
+      />
     );
   }
 
