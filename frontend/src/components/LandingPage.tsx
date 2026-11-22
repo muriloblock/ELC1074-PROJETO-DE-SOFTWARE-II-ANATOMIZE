@@ -272,7 +272,7 @@ export const LandingPage: FC<LandingPageProps> = ({
 
               <div className="text-xs text-zinc-700 space-y-2 pt-2">
                 <p>
-                  <strong>{isEs ? 'Desarrolladores:' : 'Desenvolvedores:'}</strong> Carlos Velozo, Leandro Oliveira, Lucas Pairé, Lucas Xavier e Murilo Block.
+                  <strong>{isEs ? 'Desarrolladores:' : 'Desenvolvedores:'}</strong> Carlos Velozo, Leandro Oliveira, Lucas Xavier e Murilo Block.
                 </p>
                 <p>
                   <strong>{isEs ? 'Carrera:' : 'Curso:'}</strong> Ciência da Computação.
