@@ -316,15 +316,18 @@ export const LandingPage: FC<LandingPageProps> = ({
 
           {/* CONTAINER DO VÍDEO DO DESENVOLVIMENTO (ITEM 3) */}
           <div className="max-w-4xl mx-auto bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="aspect-video flex flex-col items-center justify-center p-6 text-center text-white relative">
-              <div className="w-16 h-16 rounded-full bg-blue-600/20 border-2 border-blue-500/50 flex items-center justify-center text-blue-400 mb-3">
-                <Play className="w-8 h-8 ml-1 text-blue-400" />
-              </div>
-              <p className="text-sm font-semibold text-zinc-200">
+            <div className="aspect-video bg-zinc-950 relative">
+              <video
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full h-full object-contain block"
+                src="/videos/anatomize_making_of.mp4"
+              >
                 {isEs
-                  ? 'Espacio Reservado para el Video de Desarrollo'
-                  : 'Espaço Reservado para o Vídeo de Desenvolvimento'}
-              </p>
+                  ? 'Tu navegador no soporta la reproducción de video.'
+                  : 'Seu navegador não suporta a reprodução de vídeo.'}
+              </video>
             </div>
           </div>
         </div>
