@@ -191,9 +191,20 @@ const isLandingPath = () => {
   return window.location.pathname.startsWith('/landing') || window.location.hash.includes('landing');
 };
 
+const isExplicitAppPath = () => {
+  if (typeof window === 'undefined') return false;
+  return window.location.pathname.startsWith('/app') || isPreviewMode;
+};
+
 export function App() {
   const [lang, setLang] = useState<Language>(lerIdiomaInicial);
-  const [currentView, setCurrentView] = useState<'app' | 'landing'>(() => (isLandingPath() ? 'landing' : 'app'));
+  const { user, isLoading: isAuthLoading, signOut } = useAuth();
+  const [currentView, setCurrentView] = useState<'app' | 'landing'>(() =>
+    isLandingPath() ? 'landing' : 'app',
+  );
+  const prevUserIdRef = useRef<string | null>(null);
+  const authResolvedRef = useRef(false);
+  const cameFromLandingRef = useRef(false);
 
   useEffect(() => {
     const handleUrlChange = () => {
@@ -207,16 +218,44 @@ export function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (isAuthLoading) return;
+
+    const currentUserId = user?.id ?? null;
+
+    if (!authResolvedRef.current) {
+      authResolvedRef.current = true;
+      prevUserIdRef.current = currentUserId;
+      // Se já está logado ao abrir a raiz, cai direto na landing page
+      if (currentUserId && !isExplicitAppPath()) {
+        setCurrentView('landing');
+      }
+      return;
+    }
+
+    // Ao fazer login (null -> user), cai direto na landing page (a menos que tenha vindo dela clicando em Entrar)
+    if (!prevUserIdRef.current && currentUserId) {
+      if (!cameFromLandingRef.current && !isPreviewMode) {
+        setCurrentView('landing');
+        window.history.replaceState({}, '', '/landing');
+      }
+      cameFromLandingRef.current = false;
+    }
+
+    prevUserIdRef.current = currentUserId;
+  }, [user, isAuthLoading]);
+
   const navigateTo = (view: 'app' | 'landing') => {
+    if (view === 'app' && currentView === 'landing' && !user) {
+      cameFromLandingRef.current = true;
+    }
     setCurrentView(view);
     if (view === 'landing') {
       window.history.pushState({}, '', '/landing');
     } else {
-      window.history.pushState({}, '', '/');
+      window.history.pushState({}, '', '/app');
     }
   };
-
-  const { user, isLoading: isAuthLoading, signOut } = useAuth();
   const [sessions, setSessions] = useState<StudySession[]>(isPreviewMode ? [MOCK_PREVIEW_SESSION] : []);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(isPreviewMode ? MOCK_PREVIEW_SESSION.id : null);
   const [searchQuery, setSearchQuery] = useState('');
