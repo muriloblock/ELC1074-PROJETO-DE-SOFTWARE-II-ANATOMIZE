@@ -5,7 +5,6 @@ import {
   Award,
   CheckCircle2,
   ArrowRight,
-  Play,
 } from 'lucide-react';
 import type { Language } from '../types';
 import { LanguageToggle } from './LanguageToggle';
@@ -213,17 +212,20 @@ export const LandingPage: FC<LandingPageProps> = ({
             </p>
           </div>
 
-          {/* CONTAINER DO VÍDEO ARQUITETADO VISUALMENTE */}
+          {/* CONTAINER DO VÍDEO DE DEMONSTRAÇÃO (ITEM 2) */}
           <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="aspect-video flex flex-col items-center justify-center p-6 text-center text-white relative">
-              <div className="w-16 h-16 rounded-full bg-emerald-600/20 border-2 border-emerald-500/50 flex items-center justify-center text-emerald-400 mb-3">
-                <Play className="w-8 h-8 ml-1 text-emerald-400" />
-              </div>
-              <p className="text-sm font-semibold text-zinc-200">
+            <div className="aspect-video bg-zinc-950 relative">
+              <video
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full h-full object-contain block"
+                src="/videos/anatomize_demo.mp4"
+              >
                 {isEs
-                  ? 'Espacio Reservado para el Video de Demostración'
-                  : 'Espaço Reservado para o Vídeo de Demonstração'}
-              </p>
+                  ? 'Tu navegador no soporta la reproducción de video.'
+                  : 'Seu navegador não suporta a reprodução de vídeo.'}
+              </video>
             </div>
           </div>
         </div>
